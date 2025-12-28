@@ -1,181 +1,73 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Swedish Payslip Generator</title>
+<title>Payslip Test</title>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    padding: 20px;
-}
-.container {
-    max-width: 900px;
-    margin: auto;
-}
-.form-section, .payslip {
-    background: #fff;
-    padding: 20px;
-    border: 1px solid #000;
-    margin-bottom: 20px;
-}
-label {
-    font-weight: bold;
-    display: block;
-    margin-top: 10px;
-}
-input, select {
-    width: 100%;
-    padding: 6px;
-    margin-top: 4px;
-}
-button {
-    margin-top: 15px;
-    padding: 8px 14px;
-    cursor: pointer;
-}
-.header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-table, th, td {
-    border: 1px solid #000;
-}
-th, td {
-    padding: 6px;
-}
-.total {
-    font-weight: bold;
-}
+body { font-family: Arial; background:#f4f4f4; padding:20px; }
+.box { background:#fff; padding:20px; max-width:700px; margin:auto; border:1px solid #000; }
+label { display:block; margin-top:10px; font-weight:bold; }
+input { width:100%; padding:6px; }
+button { margin-top:15px; padding:8px 14px; }
+table { width:100%; border-collapse:collapse; margin-top:15px; }
+table, th, td { border:1px solid #000; }
+th, td { padding:6px; }
+.total { font-weight:bold; }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="box">
+<h3>Payslip Input</h3>
 
-<div class="form-section">
-<h3>Löneuppgifter</h3>
-
-<label>Företagsnamn</label>
+<label>Business Name</label>
 <input id="company" value="Ittefaq Transport AB">
 
-<label>Anställd</label>
+<label>Employee Name</label>
 <input id="employee" value="Junaid Anwar">
 
-<label>Anställningsnummer</label>
-<input id="empId" value="005">
-
-<label>Ålder</label>
-<input id="age" type="number" value="40">
-
-<label>Löneperiod (start)</label>
-<input type="date" id="periodStart">
-
-<label>Löneperiod (slut)</label>
-<input type="date" id="periodEnd">
-
-<label>Utbetalningsdatum</label>
-<input type="date" id="payDate">
-
-<label>Kommun</label>
-<select id="municipality">
-    <option value="0.322">Stockholm</option>
-    <option value="0.331">Göteborg</option>
-    <option value="0.320">Malmö</option>
-    <option value="0.340">Uppsala</option>
-</select>
-
-<label>Månadslön (SEK)</label>
+<label>Monthly Salary</label>
 <input id="salary" type="number" value="32500">
 
-<label>Ersättningar (SEK)</label>
-<input id="allowance" type="number" value="3200">
+<label>Tax</label>
+<input id="tax" type="number" value="6885">
 
-<button onclick="generatePayslip()">Generera lönebesked</button>
-<button onclick="downloadPDF()">Ladda ner PDF</button>
+<button onclick="generate()">Generate Payslip</button>
+<button id="pdfBtn" onclick="downloadPDF()" disabled>Download PDF</button>
 </div>
 
-<div class="payslip" id="payslip"></div>
-
-</div>
+<div class="box" id="payslip" style="display:none;"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-function calculateTax(monthlyGross, municipalRate, age) {
-    const annualIncome = monthlyGross * 12;
-    const stateThreshold = 598500;
-    const stateTaxRate = 0.20;
-
-    let municipalTax = annualIncome * municipalRate;
-
-    // Age-based reduction (66+)
-    if (age >= 66) {
-        municipalTax *= 0.80; // 20% reduction
-    }
-
-    let stateTax = 0;
-    if (annualIncome > stateThreshold) {
-        stateTax = (annualIncome - stateThreshold) * stateTaxRate;
-    }
-
-    return (municipalTax + stateTax) / 12;
-}
-
-function generatePayslip() {
-
-    const companyName = document.getElementById("company").value;
-    const employeeName = document.getElementById("employee").value;
-    const empId = document.getElementById("empId").value;
-    const age = Number(document.getElementById("age").value);
-
-    const periodStart = document.getElementById("periodStart").value;
-    const periodEnd = document.getElementById("periodEnd").value;
-    const payDate = document.getElementById("payDate").value;
-
+function generate() {
+    const company = document.getElementById("company").value;
+    const employee = document.getElementById("employee").value;
     const salary = Number(document.getElementById("salary").value);
-    const allowance = Number(document.getElementById("allowance").value);
-    const municipalRate = Number(document.getElementById("municipality").value);
+    const tax = Number(document.getElementById("tax").value);
+    const net = salary - tax;
 
-    const gross = salary + allowance;
-    const tax = calculateTax(gross, municipalRate, age);
-    const employerFee = gross * 0.3142;
-    const net = gross - tax;
-
+    document.getElementById("payslip").style.display = "block";
     document.getElementById("payslip").innerHTML = `
-        <div class="header">
-            <div>
-                <strong>${companyName}</strong><br>
-                ${employeeName} (${empId})
-            </div>
-            <div>
-                Period: ${periodStart} – ${periodEnd}<br>
-                Pay date: ${payDate}
-            </div>
-        </div>
+        <strong>${company}</strong><br>
+        Employee: ${employee}
 
         <table>
-            <tr><th>Löneart</th><th>SEK</th></tr>
-            <tr><td>Månadslön</td><td>${salary.toFixed(2)}</td></tr>
-            <tr><td>Ersättningar</td><td>${allowance.toFixed(2)}</td></tr>
-            <tr class="total"><td>Bruttolön</td><td>${gross.toFixed(2)}</td></tr>
-            <tr><td>Inkomstskatt</td><td>${tax.toFixed(2)}</td></tr>
-            <tr class="total"><td>Nettolön</td><td>${net.toFixed(2)}</td></tr>
-            <tr><td>Arbetsgivaravgift</td><td>${employerFee.toFixed(2)}</td></tr>
+            <tr><th>Description</th><th>SEK</th></tr>
+            <tr><td>Gross Salary</td><td>${salary.toFixed(2)}</td></tr>
+            <tr><td>Tax</td><td>${tax.toFixed(2)}</td></tr>
+            <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
         </table>
     `;
+
+    document.getElementById("pdfBtn").disabled = false;
 }
 
 function downloadPDF() {
-    html2pdf().from(document.getElementById("payslip")).save("lonebesked.pdf");
+    html2pdf().from(document.getElementById("payslip")).save("payslip.pdf");
 }
 </script>
 
