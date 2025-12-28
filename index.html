@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swedish Payslip Generator</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+}
+
+.container {
+    background: #fff;
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #000;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+}
+
+button {
+    padding: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table, th, td {
+    border: 1px solid #000;
+}
+
+th, td {
+    padding: 6px;
+}
+
+.total {
+    font-weight: bold;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container" id="payslip">
+<h2>Salary Slip Generator</h2>
+
+<input id="company" value="Ittefaq Transport AB">
+<input id="employee" value="Junaid Anwar">
+<input id="empNo" value="005">
+<input id="period" value="2023-09-01 – 2023-09-30">
+<input id="payDate" value="2023-10-25">
+
+<input id="salary" type="number" value="32500">
+<input id="allowance" type="number" value="3200">
+<input id="tax" type="number" value="6885">
+
+<button onclick="generate()">Generate Payslip</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+<div id="output"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+<script>
+function generate() {
+    let salary = +document.getElementById("salary").value;
+    let allowance = +document.getElementById("allowance").value;
+    let tax = +document.getElementById("tax").value;
+
+    let gross = salary + allowance;
+    let net = gross - tax;
+
+    document.getElementById("output").innerHTML = `
+    <div class="header">
+        <div>
+            <strong>${company.value}</strong><br>
+            Employee: ${employee.value}<br>
+            No: ${empNo.value}
+        </div>
+        <div>
+            Period: ${period.value}<br>
+            Pay date: ${payDate.value}
+        </div>
+    </div>
+
+    <table>
+        <tr><th>Description</th><th>SEK</th></tr>
+        <tr><td>Monthly Salary</td><td>${salary.toFixed(2)}</td></tr>
+        <tr><td>Allowances</td><td>${allowance.toFixed(2)}</td></tr>
+        <tr class="total"><td>Gross</td><td>${gross.toFixed(2)}</td></tr>
+        <tr><td>Tax</td><td>${tax.toFixed(2)}</td></tr>
+        <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
+    </table>
+    `;
+}
+
+function downloadPDF() {
+    html2pdf().from(document.getElementById("payslip")).save("salary-slip.pdf");
+}
+</script>
+
+</body>
+</html>
