@@ -6,30 +6,36 @@
 
 <style>
 body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
-.container { max-width:900px; margin:auto; }
+.container { max-width:1000px; margin:auto; }
 
 .form, .payslip {
-    background:#fff;
-    padding:20px;
-    border:1px solid #000;
-    margin-bottom:20px;
+  background:#fff;
+  padding:20px;
+  border:1px solid #000;
+  margin-bottom:20px;
 }
 
 label { font-weight:bold; display:block; margin-top:10px; }
 input, select { width:100%; padding:6px; margin-top:4px; }
-
 button { margin-top:15px; padding:8px 14px; cursor:pointer; }
 
 .header {
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:15px;
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
 }
 
 table { width:100%; border-collapse:collapse; margin-top:15px; }
 table, th, td { border:1px solid #000; }
 th, td { padding:6px; }
 .total { font-weight:bold; }
+
+.footer {
+  margin-top:20px;
+  font-size:12px;
+  border-top:1px solid #000;
+  padding-top:10px;
+}
 </style>
 </head>
 
@@ -38,10 +44,24 @@ th, td { padding:6px; }
 <div class="container">
 
 <div class="form">
-<h3>Salary Slip Input</h3>
+<h3>Payslip Input</h3>
 
 <label>Business Name</label>
 <input id="company" value="Ittefaq Transport AB">
+
+<label>Org.nr</label>
+<input id="orgnr" value="559138-6643">
+
+<label>Address</label>
+<input id="address" value="Karpgatan 15, 13341 Saltsjöbaden">
+
+<label>Phone</label>
+<input id="phone" value="0739556767">
+
+<label>Email</label>
+<input id="email" value="ittefaq.transport08@gmail.com">
+
+<hr>
 
 <label>Employee Name</label>
 <input id="employee" value="Junaid Anwar">
@@ -52,31 +72,42 @@ th, td { padding:6px; }
 <label>Age</label>
 <input id="age" type="number" value="40">
 
-<label>Pay Period – Start</label>
+<label>Church Member?</label>
+<select id="church">
+  <option value="0">No</option>
+  <option value="0.01">Yes (1%)</option>
+</select>
+
+<label>Municipality</label>
+<select id="municipality">
+  <option value="0.322">Stockholm</option>
+  <option value="0.331">Göteborg</option>
+  <option value="0.320">Malmö</option>
+  <option value="0.340">Uppsala</option>
+</select>
+
+<label>Pay Period Start</label>
 <input type="date" id="periodStart">
 
-<label>Pay Period – End</label>
+<label>Pay Period End</label>
 <input type="date" id="periodEnd">
 
 <label>Pay Date</label>
 <input type="date" id="payDate">
 
-<label>Municipality</label>
-<select id="municipality">
-    <option value="0.322">Stockholm</option>
-    <option value="0.331">Göteborg</option>
-    <option value="0.320">Malmö</option>
-    <option value="0.340">Uppsala</option>
-</select>
-
 <label>Monthly Salary (SEK)</label>
 <input id="salary" type="number" value="32500">
 
-<label>Deductible Allowances (SEK)</label>
+<label>Allowances (SEK)</label>
 <input id="allowance" type="number" value="3200">
 
 <button onclick="generatePayslip()">Generate Payslip</button>
 <button id="pdfBtn" onclick="downloadPDF()" disabled>Download PDF</button>
+
+<hr>
+
+<label>Batch upload (CSV)</label>
+<input type="file" accept=".csv" onchange="handleCSV(this.files)">
 </div>
 
 <div class="payslip" id="payslip" style="display:none;"></div>
@@ -86,79 +117,124 @@ th, td { padding:6px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-function calculateTax(monthlyGross, municipalRate, age) {
-    const annual = monthlyGross * 12;
-    const stateThreshold = 598500;
-    const stateRate = 0.20;
+// --- TAX ENGINE (LICENSED-SAFE) ---
+function calculateTax(gross, municipalRate, age, churchRate) {
+  const annual = gross * 12;
+  let municipalTax = annual * municipalRate;
 
-    let municipalTax = annual * municipalRate;
+  // Job tax credit (simplified)
+  municipalTax *= 0.90;
 
-    // Age-based reduction (65+/66+)
-    if (age >= 66) {
-        municipalTax *= 0.80; // ~20% reduction
-    }
+  // Age reduction
+  if (age >= 66) municipalTax *= 0.80;
 
-    let stateTax = 0;
-    if (annual > stateThreshold) {
-        stateTax = (annual - stateThreshold) * stateRate;
-    }
+  // Church fee
+  const churchTax = annual * churchRate;
 
-    return (municipalTax + stateTax) / 12;
+  // State tax
+  const threshold = 598500;
+  const stateTax = annual > threshold ? (annual - threshold) * 0.20 : 0;
+
+  return (municipalTax + churchTax + stateTax) / 12;
 }
 
-function generatePayslip() {
+function generatePayslip(data) {
 
-    const company = document.getElementById("company").value;
-    const employee = document.getElementById("employee").value;
-    const empId = document.getElementById("empId").value;
-    const age = Number(document.getElementById("age").value);
+  const d = data || {
+    company: company.value,
+    orgnr: orgnr.value,
+    address: address.value,
+    phone: phone.value,
+    email: email.value,
+    employee: employee.value,
+    empId: empId.value,
+    age: +age.value,
+    salary: +salary.value,
+    allowance: +allowance.value,
+    municipalRate: +municipality.value,
+    churchRate: +church.value,
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value,
+    payDate: payDate.value
+  };
 
-    const start = document.getElementById("periodStart").value;
-    const end = document.getElementById("periodEnd").value;
-    const payDate = document.getElementById("payDate").value;
+  const gross = d.salary + d.allowance;
+  const tax = calculateTax(gross, d.municipalRate, d.age, d.churchRate);
+  const net = gross - tax;
+  const employerFee = gross * 0.3142;
 
-    const salary = Number(document.getElementById("salary").value);
-    const allowance = Number(document.getElementById("allowance").value);
-    const municipalRate = Number(document.getElementById("municipality").value);
+  // Holiday accrual
+  const holidayPay = gross * 0.12;
+  const holidayDays = (25 / 12).toFixed(2);
 
-    const gross = salary + allowance;
-    const tax = calculateTax(gross, municipalRate, age);
-    const employerFee = gross * 0.3142;
-    const net = gross - tax;
+  const p = document.getElementById("payslip");
+  p.style.display = "block";
 
-    const payslip = document.getElementById("payslip");
-    payslip.style.display = "block";
+  p.innerHTML = `
+    <div class="header">
+      <div>
+        <strong>${d.company}</strong><br>
+        ${d.employee} (${d.empId})
+      </div>
+      <div>
+        ${d.periodStart} – ${d.periodEnd}<br>
+        Pay date: ${d.payDate}
+      </div>
+    </div>
 
-    payslip.innerHTML = `
-        <div class="header">
-            <div>
-                <strong>${company}</strong><br>
-                ${employee} (${empId})
-            </div>
-            <div>
-                Period: ${start} – ${end}<br>
-                Pay date: ${payDate}
-            </div>
-        </div>
+    <table>
+      <tr><th>Description</th><th>SEK</th></tr>
+      <tr><td>Monthly Salary</td><td>${d.salary.toFixed(2)}</td></tr>
+      <tr><td>Allowances</td><td>${d.allowance.toFixed(2)}</td></tr>
+      <tr class="total"><td>Gross Salary</td><td>${gross.toFixed(2)}</td></tr>
+      <tr><td>Income Tax</td><td>${tax.toFixed(2)}</td></tr>
+      <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
+      <tr><td>Employer Contribution</td><td>${employerFee.toFixed(2)}</td></tr>
+      <tr><td>Holiday Pay Accrued</td><td>${holidayPay.toFixed(2)}</td></tr>
+      <tr><td>Holiday Days Accrued</td><td>${holidayDays}</td></tr>
+    </table>
 
-        <table>
-            <tr><th>Description</th><th>SEK</th></tr>
-            <tr><td>Monthly Salary</td><td>${salary.toFixed(2)}</td></tr>
-            <tr><td>Allowances</td><td>${allowance.toFixed(2)}</td></tr>
-            <tr class="total"><td>Gross Salary</td><td>${gross.toFixed(2)}</td></tr>
-            <tr><td>Income Tax</td><td>${tax.toFixed(2)}</td></tr>
-            <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
-            <tr><td>Employer Contribution</td><td>${employerFee.toFixed(2)}</td></tr>
-        </table>
-    `;
+    <div class="footer">
+      ${d.company} | Org.nr ${d.orgnr}<br>
+      ${d.address} | ${d.phone} | ${d.email}
+    </div>
+  `;
 
-    document.getElementById("pdfBtn").disabled = false;
+  document.getElementById("pdfBtn").disabled = false;
 }
 
 function downloadPDF() {
-    html2pdf()
-        .from(document.getElementById("payslip"))
-        .save("salary-slip.pdf");
+  html2pdf().from(document.getElementById("payslip")).save("salary-slip.pdf");
+}
+
+// --- CSV BATCH ---
+function handleCSV(files) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = e.target.result.split("\n").slice(1);
+    rows.forEach(r => {
+      if (!r.trim()) return;
+      const c = r.split(",");
+      generatePayslip({
+        company: company.value,
+        orgnr: orgnr.value,
+        address: address.value,
+        phone: phone.value,
+        email: email.value,
+        employee: c[0],
+        empId: c[1],
+        age: +c[2],
+        salary: +c[3],
+        allowance: +c[4],
+        municipalRate: +c[5],
+        churchRate: +c[6],
+        periodStart: periodStart.value,
+        periodEnd: periodEnd.value,
+        payDate: payDate.value
+      });
+    });
+  };
+  reader.readAsText(files[0]);
 }
 </script>
 
