@@ -44,7 +44,7 @@ th, td { padding:6px; }
 <div class="container">
 
 <div class="form">
-<h3>Salary Slip Input (Tabell 30 – Column 1)</h3>
+<h3>Salary Slip Input (Skattetabell 30 – Column 1)</h3>
 
 <label>Business Name</label>
 <input id="company" value="Ittefaq Transport AB">
@@ -90,8 +90,7 @@ th, td { padding:6px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-// ---------------- TABELL 30 – COLUMN 1 (PARTIAL) ----------------
-// Extend this array directly from the official PDF
+// ---------------- TABELL 30 – COLUMN 1 (PARTIAL SAMPLE) ----------------
 const tabell30_col1 = [
   { min: 0, max: 2000, tax: 0 },
   { min: 2001, max: 2100, tax: 150 },
@@ -107,20 +106,23 @@ const tabell30_col1 = [
 
 function taxFromTabell30(gross) {
   for (let r of tabell30_col1) {
-    if (gross >= r.min && gross <= r.max) return r.tax;
+    if (gross >= r.min && gross <= r.max) {
+      return r.tax;
+    }
   }
   return 0;
 }
 
 function generatePayslip() {
 
-  const company = companyInput();
-  const employeeName = employeeInput();
+  const company = document.getElementById("company").value;
+  const orgnr = document.getElementById("orgnr").value;
+  const employee = document.getElementById("employee").value;
   const empId = document.getElementById("empId").value;
 
-  const start = periodStart.value;
-  const end = periodEnd.value;
-  const payDate = payDate.value;
+  const periodStart = document.getElementById("periodStart").value;
+  const periodEnd = document.getElementById("periodEnd").value;
+  const payDate = document.getElementById("payDate").value;
 
   const salary = Number(document.getElementById("salary").value);
   const allowance = Number(document.getElementById("allowance").value);
@@ -142,10 +144,10 @@ function generatePayslip() {
     <div class="header">
       <div>
         <strong>${company}</strong><br>
-        ${employeeName} (${empId})
+        ${employee} (${empId})
       </div>
       <div>
-        Period: ${start} – ${end}<br>
+        Period: ${periodStart} – ${periodEnd}<br>
         Pay date: ${payDate}
       </div>
     </div>
@@ -163,7 +165,7 @@ function generatePayslip() {
     </table>
 
     <div class="footer">
-      ${company} | Org.nr ${orgnr.value}
+      ${company} | Org.nr ${orgnr}
     </div>
   `;
 
@@ -172,13 +174,6 @@ function generatePayslip() {
 
 function downloadPDF() {
   html2pdf().from(document.getElementById("payslip")).save("salary-slip.pdf");
-}
-
-function companyInput() {
-  return document.getElementById("company").value;
-}
-function employeeInput() {
-  return document.getElementById("employee").value;
 }
 </script>
 
