@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
 <meta charset="UTF-8">
 <title>Swedish Payslip Generator</title>
@@ -12,22 +12,32 @@ body {
 }
 
 .container {
-    background: #fff;
-    max-width: 800px;
+    max-width: 900px;
     margin: auto;
-    padding: 20px;
-    border: 1px solid #000;
 }
 
-input {
+.form-section, .payslip {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #000;
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+input, select {
     width: 100%;
-    padding: 8px;
-    margin: 5px 0;
+    padding: 6px;
+    margin-top: 4px;
 }
 
 button {
-    padding: 10px;
-    margin-top: 10px;
+    margin-top: 15px;
+    padding: 8px 14px;
     cursor: pointer;
 }
 
@@ -55,66 +65,123 @@ th, td {
     font-weight: bold;
 }
 </style>
-
 </head>
+
 <body>
 
-<div class="container" id="payslip">
-<h2>Salary Slip Generator</h2>
+<div class="container">
 
+<button onclick="toggleLang()">SV / EN</button>
+
+<div class="form-section">
+<h3 id="formTitle">Löneuppgifter</h3>
+
+<label id="lblCompany">Företagsnamn</label>
 <input id="company" value="Ittefaq Transport AB">
+
+<label id="lblEmployee">Anställd</label>
 <input id="employee" value="Junaid Anwar">
-<input id="empNo" value="005">
+
+<label id="lblEmpId">Anställningsnummer</label>
+<input id="empId" value="005">
+
+<label id="lblPeriod">Löneperiod</label>
 <input id="period" value="2023-09-01 – 2023-09-30">
+
+<label id="lblPayDate">Utbetalningsdatum</label>
 <input id="payDate" value="2023-10-25">
 
+<label id="lblMunicipality">Kommun</label>
+<select id="municipality">
+    <option value="0.322">Stockholm</option>
+    <option value="0.331">Göteborg</option>
+    <option value="0.320">Malmö</option>
+    <option value="0.340">Uppsala</option>
+</select>
+
+<label id="lblSalary">Månadslön (SEK)</label>
 <input id="salary" type="number" value="32500">
+
+<label id="lblAllowance">Ersättningar (SEK)</label>
 <input id="allowance" type="number" value="3200">
-<input id="tax" type="number" value="6885">
 
-<button onclick="generate()">Generate Payslip</button>
-<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="generatePayslip()">Generera lönebesked</button>
+<button onclick="downloadPDF()">Ladda ner PDF</button>
+</div>
 
-<div id="output"></div>
+<div class="payslip" id="payslip"></div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-function generate() {
-    let salary = +document.getElementById("salary").value;
-    let allowance = +document.getElementById("allowance").value;
-    let tax = +document.getElementById("tax").value;
+let lang = "sv";
 
-    let gross = salary + allowance;
-    let net = gross - tax;
+function toggleLang() {
+    lang = lang === "sv" ? "en" : "sv";
+    document.getElementById("lblCompany").innerText = lang === "sv" ? "Företagsnamn" : "Business Name";
+    document.getElementById("lblEmployee").innerText = lang === "sv" ? "Anställd" : "Employee";
+    document.getElementById("lblEmpId").innerText = lang === "sv" ? "Anställningsnummer" : "Employee ID";
+    document.getElementById("lblPeriod").innerText = lang === "sv" ? "Löneperiod" : "Pay Period";
+    document.getElementById("lblPayDate").innerText = lang === "sv" ? "Utbetalningsdatum" : "Pay Date";
+    document.getElementById("lblMunicipality").innerText = lang === "sv" ? "Kommun" : "Municipality";
+    document.getElementById("lblSalary").innerText = lang === "sv" ? "Månadslön (SEK)" : "Monthly Salary (SEK)";
+    document.getElementById("lblAllowance").innerText = lang === "sv" ? "Ersättningar (SEK)" : "Allowances (SEK)";
+}
 
-    document.getElementById("output").innerHTML = `
-    <div class="header">
-        <div>
-            <strong>${company.value}</strong><br>
-            Employee: ${employee.value}<br>
-            No: ${empNo.value}
+function calculateTax(monthlyGross, municipalRate) {
+    const annual = monthlyGross * 12;
+    const stateThreshold = 598500;
+    let annualTax = annual * municipalRate;
+
+    if (annual > stateThreshold) {
+        annualTax += (annual - stateThreshold) * 0.20;
+    }
+    return annualTax / 12;
+}
+
+function generatePayslip() {
+    const company = company.value;
+    const employeeName = employee.value;
+    const emp = empId.value;
+    const periodVal = period.value;
+    const payDateVal = payDate.value;
+    const salaryVal = Number(salary.value);
+    const allowanceVal = Number(allowance.value);
+    const municipalRate = Number(municipality.value);
+
+    const gross = salaryVal + allowanceVal;
+    const tax = calculateTax(gross, municipalRate);
+    const employerFee = gross * 0.3142;
+    const net = gross - tax;
+
+    document.getElementById("payslip").innerHTML = `
+        <div class="header">
+            <div>
+                <strong>${company}</strong><br>
+                ${employeeName} (${emp})
+            </div>
+            <div>
+                ${periodVal}<br>
+                ${payDateVal}
+            </div>
         </div>
-        <div>
-            Period: ${period.value}<br>
-            Pay date: ${payDate.value}
-        </div>
-    </div>
 
-    <table>
-        <tr><th>Description</th><th>SEK</th></tr>
-        <tr><td>Monthly Salary</td><td>${salary.toFixed(2)}</td></tr>
-        <tr><td>Allowances</td><td>${allowance.toFixed(2)}</td></tr>
-        <tr class="total"><td>Gross</td><td>${gross.toFixed(2)}</td></tr>
-        <tr><td>Tax</td><td>${tax.toFixed(2)}</td></tr>
-        <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
-    </table>
+        <table>
+            <tr><th>${lang==="sv"?"Löneart":"Description"}</th><th>SEK</th></tr>
+            <tr><td>${lang==="sv"?"Månadslön":"Monthly Salary"}</td><td>${salaryVal.toFixed(2)}</td></tr>
+            <tr><td>${lang==="sv"?"Ersättningar":"Allowances"}</td><td>${allowanceVal.toFixed(2)}</td></tr>
+            <tr class="total"><td>${lang==="sv"?"Bruttolön":"Gross Salary"}</td><td>${gross.toFixed(2)}</td></tr>
+            <tr><td>${lang==="sv"?"Inkomstskatt":"Income Tax"}</td><td>${tax.toFixed(2)}</td></tr>
+            <tr class="total"><td>${lang==="sv"?"Nettolön":"Net Pay"}</td><td>${net.toFixed(2)}</td></tr>
+            <tr><td>${lang==="sv"?"Arbetsgivaravgift":"Employer Contribution"}</td><td>${employerFee.toFixed(2)}</td></tr>
+        </table>
     `;
 }
 
 function downloadPDF() {
-    html2pdf().from(document.getElementById("payslip")).save("salary-slip.pdf");
+    html2pdf().from(document.getElementById("payslip")).save("lonebesked.pdf");
 }
 </script>
 
