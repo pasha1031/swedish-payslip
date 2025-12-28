@@ -10,57 +10,47 @@ body {
     background: #f4f4f4;
     padding: 20px;
 }
-
 .container {
     max-width: 900px;
     margin: auto;
 }
-
 .form-section, .payslip {
     background: #fff;
     padding: 20px;
     border: 1px solid #000;
     margin-bottom: 20px;
 }
-
 label {
     font-weight: bold;
     display: block;
     margin-top: 10px;
 }
-
 input, select {
     width: 100%;
     padding: 6px;
     margin-top: 4px;
 }
-
 button {
     margin-top: 15px;
     padding: 8px 14px;
     cursor: pointer;
 }
-
 .header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
 }
-
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
-
 table, th, td {
     border: 1px solid #000;
 }
-
 th, td {
     padding: 6px;
 }
-
 .total {
     font-weight: bold;
 }
@@ -71,27 +61,31 @@ th, td {
 
 <div class="container">
 
-<button onclick="toggleLang()">SV / EN</button>
-
 <div class="form-section">
-<h3 id="formTitle">Löneuppgifter</h3>
+<h3>Löneuppgifter</h3>
 
-<label id="lblCompany">Företagsnamn</label>
+<label>Företagsnamn</label>
 <input id="company" value="Ittefaq Transport AB">
 
-<label id="lblEmployee">Anställd</label>
+<label>Anställd</label>
 <input id="employee" value="Junaid Anwar">
 
-<label id="lblEmpId">Anställningsnummer</label>
+<label>Anställningsnummer</label>
 <input id="empId" value="005">
 
-<label id="lblPeriod">Löneperiod</label>
-<input id="period" value="2023-09-01 – 2023-09-30">
+<label>Ålder</label>
+<input id="age" type="number" value="40">
 
-<label id="lblPayDate">Utbetalningsdatum</label>
-<input id="payDate" value="2023-10-25">
+<label>Löneperiod (start)</label>
+<input type="date" id="periodStart">
 
-<label id="lblMunicipality">Kommun</label>
+<label>Löneperiod (slut)</label>
+<input type="date" id="periodEnd">
+
+<label>Utbetalningsdatum</label>
+<input type="date" id="payDate">
+
+<label>Kommun</label>
 <select id="municipality">
     <option value="0.322">Stockholm</option>
     <option value="0.331">Göteborg</option>
@@ -99,10 +93,10 @@ th, td {
     <option value="0.340">Uppsala</option>
 </select>
 
-<label id="lblSalary">Månadslön (SEK)</label>
+<label>Månadslön (SEK)</label>
 <input id="salary" type="number" value="32500">
 
-<label id="lblAllowance">Ersättningar (SEK)</label>
+<label>Ersättningar (SEK)</label>
 <input id="allowance" type="number" value="3200">
 
 <button onclick="generatePayslip()">Generera lönebesked</button>
@@ -116,66 +110,66 @@ th, td {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-let lang = "sv";
-
-function toggleLang() {
-    lang = lang === "sv" ? "en" : "sv";
-    document.getElementById("lblCompany").innerText = lang === "sv" ? "Företagsnamn" : "Business Name";
-    document.getElementById("lblEmployee").innerText = lang === "sv" ? "Anställd" : "Employee";
-    document.getElementById("lblEmpId").innerText = lang === "sv" ? "Anställningsnummer" : "Employee ID";
-    document.getElementById("lblPeriod").innerText = lang === "sv" ? "Löneperiod" : "Pay Period";
-    document.getElementById("lblPayDate").innerText = lang === "sv" ? "Utbetalningsdatum" : "Pay Date";
-    document.getElementById("lblMunicipality").innerText = lang === "sv" ? "Kommun" : "Municipality";
-    document.getElementById("lblSalary").innerText = lang === "sv" ? "Månadslön (SEK)" : "Monthly Salary (SEK)";
-    document.getElementById("lblAllowance").innerText = lang === "sv" ? "Ersättningar (SEK)" : "Allowances (SEK)";
-}
-
-function calculateTax(monthlyGross, municipalRate) {
-    const annual = monthlyGross * 12;
+function calculateTax(monthlyGross, municipalRate, age) {
+    const annualIncome = monthlyGross * 12;
     const stateThreshold = 598500;
-    let annualTax = annual * municipalRate;
+    const stateTaxRate = 0.20;
 
-    if (annual > stateThreshold) {
-        annualTax += (annual - stateThreshold) * 0.20;
+    let municipalTax = annualIncome * municipalRate;
+
+    // Age-based reduction (66+)
+    if (age >= 66) {
+        municipalTax *= 0.80; // 20% reduction
     }
-    return annualTax / 12;
+
+    let stateTax = 0;
+    if (annualIncome > stateThreshold) {
+        stateTax = (annualIncome - stateThreshold) * stateTaxRate;
+    }
+
+    return (municipalTax + stateTax) / 12;
 }
 
 function generatePayslip() {
-    const company = company.value;
-    const employeeName = employee.value;
-    const emp = empId.value;
-    const periodVal = period.value;
-    const payDateVal = payDate.value;
-    const salaryVal = Number(salary.value);
-    const allowanceVal = Number(allowance.value);
-    const municipalRate = Number(municipality.value);
 
-    const gross = salaryVal + allowanceVal;
-    const tax = calculateTax(gross, municipalRate);
+    const companyName = document.getElementById("company").value;
+    const employeeName = document.getElementById("employee").value;
+    const empId = document.getElementById("empId").value;
+    const age = Number(document.getElementById("age").value);
+
+    const periodStart = document.getElementById("periodStart").value;
+    const periodEnd = document.getElementById("periodEnd").value;
+    const payDate = document.getElementById("payDate").value;
+
+    const salary = Number(document.getElementById("salary").value);
+    const allowance = Number(document.getElementById("allowance").value);
+    const municipalRate = Number(document.getElementById("municipality").value);
+
+    const gross = salary + allowance;
+    const tax = calculateTax(gross, municipalRate, age);
     const employerFee = gross * 0.3142;
     const net = gross - tax;
 
     document.getElementById("payslip").innerHTML = `
         <div class="header">
             <div>
-                <strong>${company}</strong><br>
-                ${employeeName} (${emp})
+                <strong>${companyName}</strong><br>
+                ${employeeName} (${empId})
             </div>
             <div>
-                ${periodVal}<br>
-                ${payDateVal}
+                Period: ${periodStart} – ${periodEnd}<br>
+                Pay date: ${payDate}
             </div>
         </div>
 
         <table>
-            <tr><th>${lang==="sv"?"Löneart":"Description"}</th><th>SEK</th></tr>
-            <tr><td>${lang==="sv"?"Månadslön":"Monthly Salary"}</td><td>${salaryVal.toFixed(2)}</td></tr>
-            <tr><td>${lang==="sv"?"Ersättningar":"Allowances"}</td><td>${allowanceVal.toFixed(2)}</td></tr>
-            <tr class="total"><td>${lang==="sv"?"Bruttolön":"Gross Salary"}</td><td>${gross.toFixed(2)}</td></tr>
-            <tr><td>${lang==="sv"?"Inkomstskatt":"Income Tax"}</td><td>${tax.toFixed(2)}</td></tr>
-            <tr class="total"><td>${lang==="sv"?"Nettolön":"Net Pay"}</td><td>${net.toFixed(2)}</td></tr>
-            <tr><td>${lang==="sv"?"Arbetsgivaravgift":"Employer Contribution"}</td><td>${employerFee.toFixed(2)}</td></tr>
+            <tr><th>Löneart</th><th>SEK</th></tr>
+            <tr><td>Månadslön</td><td>${salary.toFixed(2)}</td></tr>
+            <tr><td>Ersättningar</td><td>${allowance.toFixed(2)}</td></tr>
+            <tr class="total"><td>Bruttolön</td><td>${gross.toFixed(2)}</td></tr>
+            <tr><td>Inkomstskatt</td><td>${tax.toFixed(2)}</td></tr>
+            <tr class="total"><td>Nettolön</td><td>${net.toFixed(2)}</td></tr>
+            <tr><td>Arbetsgivaravgift</td><td>${employerFee.toFixed(2)}</td></tr>
         </table>
     `;
 }
