@@ -52,6 +52,15 @@ th, td { padding:6px; }
 <label>Org.nr</label>
 <input id="orgnr" value="559138-6643">
 
+<label>Address</label>
+<input id="address" value="Karpgatan 15, 13341 Saltsjöbaden">
+
+<label>Phone</label>
+<input id="phone" value="0739556767">
+
+<label>Email</label>
+<input id="email" value="ittefaq.transport08@gmail.com">
+
 <label>Employee Name</label>
 <input id="employee" value="Junaid Anwar">
 
@@ -90,33 +99,45 @@ th, td { padding:6px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-// ---------------- TABELL 30 – COLUMN 1 (PARTIAL SAMPLE) ----------------
+// ---------------- TABELL 30 – COLUMN 1 (PARTIAL, EXTENDABLE) ----------------
 const tabell30_col1 = [
-  { min: 0, max: 2000, tax: 0 },
-  { min: 2001, max: 2100, tax: 150 },
-  { min: 2101, max: 2200, tax: 152 },
-  { min: 2201, max: 2300, tax: 154 },
-  { min: 2301, max: 2400, tax: 156 },
-  { min: 2401, max: 2500, tax: 158 },
-  { min: 30001, max: 31000, tax: 6516 },
-  { min: 31001, max: 32000, tax: 6768 },
-  { min: 32001, max: 33000, tax: 7020 },
-  { min: 33001, max: 34000, tax: 7272 }
+  { max: 2000, tax: 0 },
+  { max: 2100, tax: 150 },
+  { max: 2200, tax: 152 },
+  { max: 2300, tax: 154 },
+  { max: 2400, tax: 156 },
+  { max: 2500, tax: 158 },
+  { max: 30000, tax: 6264 },
+  { max: 31000, tax: 6516 },
+  { max: 32000, tax: 6768 },
+  { max: 33000, tax: 7020 },
+  { max: 34000, tax: 7272 },
+  { max: 35000, tax: 7524 },
+  { max: 36000, tax: 7776 },
+  { max: 37000, tax: 8028 }
 ];
 
+// Payroll-correct lookup: highest bracket ≤ gross
 function taxFromTabell30(gross) {
-  for (let r of tabell30_col1) {
-    if (gross >= r.min && gross <= r.max) {
-      return r.tax;
+  let tax = 0;
+  for (let row of tabell30_col1) {
+    if (gross <= row.max) {
+      tax = row.tax;
+      break;
     }
+    tax = row.tax;
   }
-  return 0;
+  return tax;
 }
 
 function generatePayslip() {
 
   const company = document.getElementById("company").value;
   const orgnr = document.getElementById("orgnr").value;
+  const address = document.getElementById("address").value;
+  const phone = document.getElementById("phone").value;
+  const email = document.getElementById("email").value;
+
   const employee = document.getElementById("employee").value;
   const empId = document.getElementById("empId").value;
 
@@ -165,7 +186,8 @@ function generatePayslip() {
     </table>
 
     <div class="footer">
-      ${company} | Org.nr ${orgnr}
+      ${company} | Org.nr ${orgnr}<br>
+      ${address} | ${phone} | ${email}
     </div>
   `;
 
