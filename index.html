@@ -1,15 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Payslip Test</title>
+<title>Swedish Payslip Generator</title>
 
 <style>
-body { font-family: Arial; background:#f4f4f4; padding:20px; }
-.box { background:#fff; padding:20px; max-width:700px; margin:auto; border:1px solid #000; }
-label { display:block; margin-top:10px; font-weight:bold; }
-input { width:100%; padding:6px; }
-button { margin-top:15px; padding:8px 14px; }
+body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; }
+.container { max-width:900px; margin:auto; }
+
+.form, .payslip {
+    background:#fff;
+    padding:20px;
+    border:1px solid #000;
+    margin-bottom:20px;
+}
+
+label { font-weight:bold; display:block; margin-top:10px; }
+input, select { width:100%; padding:6px; margin-top:4px; }
+
+button { margin-top:15px; padding:8px 14px; cursor:pointer; }
+
+.header {
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+}
+
 table { width:100%; border-collapse:collapse; margin-top:15px; }
 table, th, td { border:1px solid #000; }
 th, td { padding:6px; }
@@ -19,8 +35,10 @@ th, td { padding:6px; }
 
 <body>
 
-<div class="box">
-<h3>Payslip Input</h3>
+<div class="container">
+
+<div class="form">
+<h3>Salary Slip Input</h3>
 
 <label>Business Name</label>
 <input id="company" value="Ittefaq Transport AB">
@@ -28,38 +46,109 @@ th, td { padding:6px; }
 <label>Employee Name</label>
 <input id="employee" value="Junaid Anwar">
 
-<label>Monthly Salary</label>
+<label>Employee ID</label>
+<input id="empId" value="005">
+
+<label>Age</label>
+<input id="age" type="number" value="40">
+
+<label>Pay Period – Start</label>
+<input type="date" id="periodStart">
+
+<label>Pay Period – End</label>
+<input type="date" id="periodEnd">
+
+<label>Pay Date</label>
+<input type="date" id="payDate">
+
+<label>Municipality</label>
+<select id="municipality">
+    <option value="0.322">Stockholm</option>
+    <option value="0.331">Göteborg</option>
+    <option value="0.320">Malmö</option>
+    <option value="0.340">Uppsala</option>
+</select>
+
+<label>Monthly Salary (SEK)</label>
 <input id="salary" type="number" value="32500">
 
-<label>Tax</label>
-<input id="tax" type="number" value="6885">
+<label>Deductible Allowances (SEK)</label>
+<input id="allowance" type="number" value="3200">
 
-<button onclick="generate()">Generate Payslip</button>
+<button onclick="generatePayslip()">Generate Payslip</button>
 <button id="pdfBtn" onclick="downloadPDF()" disabled>Download PDF</button>
 </div>
 
-<div class="box" id="payslip" style="display:none;"></div>
+<div class="payslip" id="payslip" style="display:none;"></div>
+
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-function generate() {
+function calculateTax(monthlyGross, municipalRate, age) {
+    const annual = monthlyGross * 12;
+    const stateThreshold = 598500;
+    const stateRate = 0.20;
+
+    let municipalTax = annual * municipalRate;
+
+    // Age-based reduction (65+/66+)
+    if (age >= 66) {
+        municipalTax *= 0.80; // ~20% reduction
+    }
+
+    let stateTax = 0;
+    if (annual > stateThreshold) {
+        stateTax = (annual - stateThreshold) * stateRate;
+    }
+
+    return (municipalTax + stateTax) / 12;
+}
+
+function generatePayslip() {
+
     const company = document.getElementById("company").value;
     const employee = document.getElementById("employee").value;
-    const salary = Number(document.getElementById("salary").value);
-    const tax = Number(document.getElementById("tax").value);
-    const net = salary - tax;
+    const empId = document.getElementById("empId").value;
+    const age = Number(document.getElementById("age").value);
 
-    document.getElementById("payslip").style.display = "block";
-    document.getElementById("payslip").innerHTML = `
-        <strong>${company}</strong><br>
-        Employee: ${employee}
+    const start = document.getElementById("periodStart").value;
+    const end = document.getElementById("periodEnd").value;
+    const payDate = document.getElementById("payDate").value;
+
+    const salary = Number(document.getElementById("salary").value);
+    const allowance = Number(document.getElementById("allowance").value);
+    const municipalRate = Number(document.getElementById("municipality").value);
+
+    const gross = salary + allowance;
+    const tax = calculateTax(gross, municipalRate, age);
+    const employerFee = gross * 0.3142;
+    const net = gross - tax;
+
+    const payslip = document.getElementById("payslip");
+    payslip.style.display = "block";
+
+    payslip.innerHTML = `
+        <div class="header">
+            <div>
+                <strong>${company}</strong><br>
+                ${employee} (${empId})
+            </div>
+            <div>
+                Period: ${start} – ${end}<br>
+                Pay date: ${payDate}
+            </div>
+        </div>
 
         <table>
             <tr><th>Description</th><th>SEK</th></tr>
-            <tr><td>Gross Salary</td><td>${salary.toFixed(2)}</td></tr>
-            <tr><td>Tax</td><td>${tax.toFixed(2)}</td></tr>
+            <tr><td>Monthly Salary</td><td>${salary.toFixed(2)}</td></tr>
+            <tr><td>Allowances</td><td>${allowance.toFixed(2)}</td></tr>
+            <tr class="total"><td>Gross Salary</td><td>${gross.toFixed(2)}</td></tr>
+            <tr><td>Income Tax</td><td>${tax.toFixed(2)}</td></tr>
             <tr class="total"><td>Net Pay</td><td>${net.toFixed(2)}</td></tr>
+            <tr><td>Employer Contribution</td><td>${employerFee.toFixed(2)}</td></tr>
         </table>
     `;
 
@@ -67,7 +156,9 @@ function generate() {
 }
 
 function downloadPDF() {
-    html2pdf().from(document.getElementById("payslip")).save("payslip.pdf");
+    html2pdf()
+        .from(document.getElementById("payslip"))
+        .save("salary-slip.pdf");
 }
 </script>
 
