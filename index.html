@@ -100,10 +100,41 @@ th, td { padding:6px; }
 <label>Monthly Salary (SEK)</label>
 <input id="salary" type="number" value="32500">
 
-
   
 <label>Deductable Allowances (SEK)</label>
 <input id="allowance" type="number" value="3200">
+<script>
+const TEXT = {
+  sv: {
+    payslip: "Lönebesked",
+    monthlySalary: "Månadslön",
+    hours: "Timmar",
+    hourlyRate: "Timlön",
+    allowance: "Avdragbar ersättning",
+    premiumPay: "Premielön",
+    gross: "Bruttolön",
+    tax: "Skatt",
+    church: "Kyrkoavgift",
+    net: "Utbetalas",
+    employerFee: "Arbetsgivaravgift",
+    holiday: "Semesterersättning"
+  },
+  en: {
+    payslip: "Payslip",
+    monthlySalary: "Monthly salary",
+    hours: "Hours",
+    hourlyRate: "Hourly rate",
+    allowance: "Deductible allowance",
+    premiumPay: "Premium pay",
+    gross: "Gross salary",
+    tax: "Income tax",
+    church: "Church fee",
+    net: "Net pay",
+    employerFee: "Employer contribution",
+    holiday: "Holiday pay accrual"
+  }
+};
+</script>
 
 <button onclick="generatePayslip()">Generate Payslip</button>
 <button id="pdfBtn" onclick="downloadPDF()" disabled>Download PDF</button>
