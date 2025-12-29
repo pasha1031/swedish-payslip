@@ -586,17 +586,22 @@ const tabell30_col1 = [
 
 // Payroll-correct lookup: highest bracket ≤ gross
 function taxFromTabell30(gross) {
-  let tax = 0;
-  for (let row of tabell30_col1) {
-    if (gross <= row.max) {
-      tax = row.tax;
-      break;
-    }
-    tax = row.tax;
-  }
-  return tax;
-}
+  const row = tabell30_col1.find(
+    r => gross >= r.min && gross <= r.max
+  );
 
+  if (!row) return 0;
+
+  if (row.type === "fixed") {
+    return row.value;
+  }
+
+  if (row.type === "percent") {
+    return gross * (row.value / 100);
+  }
+
+  return 0;
+}
 function generatePayslip() {
 
   const company = document.getElementById("company").value;
