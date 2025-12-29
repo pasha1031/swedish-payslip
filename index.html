@@ -72,38 +72,6 @@ th, td { padding:6px; }
   <option value="sv">Svenska</option>
   <option value="en">Swedish English</option>
 </select>
-const TEXT = {
-  sv: {
-    payslip: "Lönebesked",
-    monthlySalary: "Månadslön",
-    hours: "Timmar",
-    hourlyRate: "Timlön",
-    allowance: "Nattraktamente",
-    premiumPay: "Premielön",
-    gross: "Bruttolön",
-    tax: "Skatt",
-    church: "Kyrkoavgift",
-    net: "Utbetalas",
-    employerFee: "Arbetsgivaravgift",
-    holiday: "Semesterersättning"
-  },
-  en: {
-    payslip: "Payslip",
-    monthlySalary: "Monthly salary",
-    hours: "Hours",
-    hourlyRate: "Hourly rate",
-    allowance: "Allowance (non-taxable)",
-    premiumPay: "Premium pay",
-    gross: "Gross salary",
-    tax: "Income tax",
-    church: "Church fee",
-    net: "Net pay",
-    employerFee: "Employer contribution",
-    holiday: "Holiday pay accrual"
-  }
-};
-
-
   
 <label>Church Member?</label>
 <select id="church">
@@ -120,9 +88,20 @@ const TEXT = {
 <label>Pay Date</label>
 <input type="date" id="payDate">
 
+<label>Hours Worked (Timmar)</label>
+<input id="hours" type="number" value="168">
+
+<label>Hourly Rate (Timlön)</label>
+<input id="hourRate" type="number" value="193.45">
+
+<label>Premielön per hour</label>
+<input id="premiumRate" type="number" value="2.5">
+    
 <label>Monthly Salary (SEK)</label>
 <input id="salary" type="number" value="32500">
 
+
+  
 <label>Deductable Allowances (SEK)</label>
 <input id="allowance" type="number" value="3200">
 
@@ -655,7 +634,13 @@ function generatePayslip() {
   const periodEnd = document.getElementById("periodEnd").value;
   const payDate = document.getElementById("payDate").value;
 
-  const salary = Number(document.getElementById("salary").value);
+  const hours = Number(document.getElementById("hours").value);
+  const hourRate = Number(document.getElementById("hourRate").value);
+  const premiumRate = Number(document.getElementById("premiumRate").value);
+
+  const salary = hours * hourRate;
+  const premiumPay = hours * premiumRate;
+
   const allowance = Number(document.getElementById("allowance").value);
   const churchRate = Number(document.getElementById("church").value);
 
@@ -678,35 +663,81 @@ const holidayPay = salary * 0.12;
   const p = document.getElementById("payslip");
   p.style.display = "block";
 
-  p.innerHTML = `
-    <div class="header">
-      <div>
-        <strong>${company}</strong><br>
-        ${employee} (${empId})
-      </div>
-      <div>
-        Period: ${periodStart} – ${periodEnd}<br>
-        Pay date: ${payDate}
-      </div>
-    </div>
+  const t = TEXT[document.getElementById("lang").value];
 
-    <table>
-      <tr><th>Description</th><th>SEK</th></tr>
-      <tr><td>Monthly Salary</td><td>${salary.toFixed(2)}</td></tr>
-      <tr><td>Deductable Allowances</td><td>${allowance.toFixed(2)}</td></tr>
-      <tr class="total"><td>Gross Pay</td><td>${grossPay.toFixed(2)}</td></tr>
-      <tr><td>Income Tax (Tabell 30)</td><td>${baseTax.toFixed(2)}</td></tr>
-      <tr><td>Church Fee</td><td>${churchTax.toFixed(2)}</td></tr>
-      <tr class="total"><td>Net Pay</td><td>${netPay.toFixed(2)}</td></tr>
-      <tr><td>Employer Contribution</td><td>${employerFee.toFixed(2)}</td></tr>
-      <tr><td>Holiday Pay Accrued</td><td>${holidayPay.toFixed(2)}</td></tr>
-    </table>
+p.innerHTML = `
+<h3>${t.payslip}</h3>
 
-    <div class="footer">
-      ${company} | Org.nr ${orgnr}<br>
-      ${address} | ${phone} | ${email}
-    </div>
-  `;
+<div class="header">
+  <div>
+    <strong>${company}</strong><br>
+    ${employee} (${empId})
+  </div>
+  <div>
+    ${periodStart} – ${periodEnd}<br>
+    Pay date: ${payDate}
+  </div>
+</div>
+
+<table>
+<tr><th>Löneart</th><th>${t.hours}</th><th>${t.hourlyRate}</th><th>SEK</th></tr>
+
+<tr>
+<td>${t.monthlySalary}</td>
+<td>${hours}</td>
+<td>${hourRate.toFixed(2)}</td>
+<td>${salary.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td>${t.premiumPay}</td>
+<td>${hours}</td>
+<td>${premiumRate.toFixed(2)}</td>
+<td>${premiumPay.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td>${t.allowance}</td>
+<td colspan="2"></td>
+<td>${allowance.toFixed(2)}</td>
+</tr>
+
+<tr class="total">
+<td colspan="3">${t.gross}</td>
+<td>${grossPay.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td colspan="3">${t.tax} (Tabell 30)</td>
+<td>${baseTax.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td colspan="3">${t.church}</td>
+<td>${churchTax.toFixed(2)}</td>
+</tr>
+
+<tr class="total">
+<td colspan="3">${t.net}</td>
+<td>${netPay.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td colspan="3">${t.employerFee}</td>
+<td>${employerFee.toFixed(2)}</td>
+</tr>
+
+<tr>
+<td colspan="3">${t.holiday}</td>
+<td>${holidayPay.toFixed(2)}</td>
+</tr>
+</table>
+
+<div class="footer">
+${company} | Org.nr ${orgnr}<br>
+${address} | ${phone} | ${email}
+</div>
+`;
 
   document.getElementById("pdfBtn").disabled = false;
 }
