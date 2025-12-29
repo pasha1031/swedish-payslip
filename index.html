@@ -118,6 +118,7 @@ const TEXT = {
     net: "Utbetalas",
     employerFee: "Arbetsgivaravgift",
     holiday: "Semesterersättning"
+    wageType: "Löneart"
   },
   en: {
     payslip: "Payslip",
@@ -132,6 +133,7 @@ const TEXT = {
     net: "Net pay",
     employerFee: "Employer contribution",
     holiday: "Holiday pay accrual"
+    wageType: "Wage type"
   }
 };
 </script>
@@ -677,7 +679,7 @@ function generatePayslip() {
 
   // Payroll bases
 const taxableSalary = salary + premiumPay;             // allowances are tax-exempt
-const grossPay = salary + premiumPay + allowance;         // for display only
+const grossPay = salary + premiumPay + allowance;         // utbetalningsgrundande belopp
 
 // Taxes
 const baseTax = taxFromTabell30(taxableSalary);
@@ -688,8 +690,9 @@ const totalTax = baseTax + churchTax;
 const netPay = grossPay - totalTax;
 
 // Employer costs (salary only)
-const employerFee = salary * 0.3142;
-const holidayPay = salary * 0.12;
+const employerFee = (salary + premiumPay) * 0.3142;
+const holidayPay = (salary + premiumPay) * 0.12;
+
 
   const p = document.getElementById("payslip");
   p.style.display = "block";
@@ -711,7 +714,12 @@ p.innerHTML = `
 </div>
 
 <table>
-<tr><th>Löneart</th><th>${t.hours}</th><th>${t.hourlyRate}</th><th>SEK</th></tr>
+<tr>
+<th>${t.wageType}</th>
+<th>${t.hours}</th>
+<th>${t.hourlyRate}</th>
+<th>SEK</th>
+</tr>
 
 <tr>
 <td>${t.monthlySalary}</td>
@@ -722,7 +730,7 @@ p.innerHTML = `
 
 <tr>
 <td>${t.premiumPay}</td>
-<td>${hours}</td>
+<td>${premiumHours}</td>
 <td>${premiumRate.toFixed(2)}</td>
 <td>${premiumPay.toFixed(2)}</td>
 </tr>
