@@ -67,6 +67,44 @@ th, td { padding:6px; }
 <label>Employee ID</label>
 <input id="empId" value="005">
 
+<label>Language / Språk</label>
+<select id="lang">
+  <option value="sv">Svenska</option>
+  <option value="en">Swedish English</option>
+</select>
+const TEXT = {
+  sv: {
+    payslip: "Lönebesked",
+    monthlySalary: "Månadslön",
+    hours: "Timmar",
+    hourlyRate: "Timlön",
+    allowance: "Nattraktamente",
+    premiumPay: "Premielön",
+    gross: "Bruttolön",
+    tax: "Skatt",
+    church: "Kyrkoavgift",
+    net: "Utbetalas",
+    employerFee: "Arbetsgivaravgift",
+    holiday: "Semesterersättning"
+  },
+  en: {
+    payslip: "Payslip",
+    monthlySalary: "Monthly salary",
+    hours: "Hours",
+    hourlyRate: "Hourly rate",
+    allowance: "Allowance (non-taxable)",
+    premiumPay: "Premium pay",
+    gross: "Gross salary",
+    tax: "Income tax",
+    church: "Church fee",
+    net: "Net pay",
+    employerFee: "Employer contribution",
+    holiday: "Holiday pay accrual"
+  }
+};
+
+
+  
 <label>Church Member?</label>
 <select id="church">
   <option value="0">No</option>
