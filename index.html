@@ -95,7 +95,8 @@ th, td { padding:6px; }
 <input id="hourRate" type="number" value="193.45">
 
 <label>Premilön Hours Worked (Timmar)</label>
-<input id="hours" type="number" value="168">
+<input id="premiumHours" type="number" value="168">
+
   
 <label>Premielön per hour</label>
 <input id="premiumRate" type="number" value="2.5">
@@ -666,18 +667,17 @@ function generatePayslip() {
 
   const hours = Number(document.getElementById("hours").value);
   const hourRate = Number(document.getElementById("hourRate").value);
-  const premiumPay hours = Number(document.getElementById("hours").value);
+  const premiumHours = Number(document.getElementById("premiumHours").value);
   const premiumRate = Number(document.getElementById("premiumRate").value);
 
   const salary = hours * hourRate;
-  const premiumPay = hours * premiumRate;
-
+  const premiumPay = premiumHours * premiumRate;
   const allowance = Number(document.getElementById("allowance").value);
   const churchRate = Number(document.getElementById("church").value);
 
   // Payroll bases
 const taxableSalary = salary + premiumPay;             // allowances are tax-exempt
-const grossPay = salary + allowance;         // for display only
+const grossPay = salary + premiumPay + allowance;         // for display only
 
 // Taxes
 const baseTax = taxFromTabell30(taxableSalary);
