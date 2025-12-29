@@ -117,8 +117,10 @@ const TEXT = {
     church: "Kyrkoavgift",
     net: "Utbetalas",
     employerFee: "Arbetsgivaravgift",
-    holiday: "Semesterersättning"
+    holiday: "Semesterersättning",
     wageType: "Löneart"
+    monthlySalary: "Hourly wage",
+
   },
   en: {
     payslip: "Payslip",
@@ -132,8 +134,9 @@ const TEXT = {
     church: "Church fee",
     net: "Net pay",
     employerFee: "Employer contribution",
-    holiday: "Holiday pay accrual"
+    holiday: "Holiday pay accrual",
     wageType: "Wage type"
+
   }
 };
 </script>
@@ -689,7 +692,8 @@ const totalTax = baseTax + churchTax;
 // Net pay
 const netPay = grossPay - totalTax;
 
-// Employer costs (salary only)
+// Employer costs (salary + premium pay)
+
 const employerFee = (salary + premiumPay) * 0.3142;
 const holidayPay = (salary + premiumPay) * 0.12;
 
